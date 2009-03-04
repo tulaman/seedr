@@ -1,0 +1,18 @@
+== Seedr
+
+blablabla
+
+== Dependencies
+
+ * Nokogiri
+ * ActiveSupport
+ * Main
+ * HighLine (http://highline.rubyforge.org)
+
+If you want to run the tests, you'll also need to have the following dependencies installed:
+
+ * Echoe (for the Rakefile)
+
+== Usage
+
+blablabla
