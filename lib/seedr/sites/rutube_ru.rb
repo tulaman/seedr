@@ -117,14 +117,14 @@ module Seedr
         videos[0..count-1]
       end
 
-      def comment(video, comment = 'Cool!')
+      def comment(video_id, comment = 'Cool!')
         url = URI.parse(COMMENT_URL)
         res = Net::HTTP.start(url.host, url.port) do |http|
           req = Net::HTTP::Post.new(url.path, {'Cookie' => @auth_cookie})
           req.form_data = {
             :page      => 0, 
             :parent_id => 0, 
-            :post_id   => video.id, 
+            :post_id   => video_id, 
             :type      => 'track', 
             :rm        => 'add_ajax',
             :text      => comment

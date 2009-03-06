@@ -60,8 +60,8 @@ module Seedr
         end
       end
 
-      def comment(video, comment='Cool!')
-        doc = Nokogiri::HTML(open(video.id, {'Cookie' => @cookies}))
+      def comment(video_id, comment='Cool!')
+        doc = Nokogiri::HTML(open(video_id, {'Cookie' => @cookies}))
         form = doc.xpath('//form[@class="b-form b-form-comment-add"]').first
         fields = form.xpath('input').inject({}) { |h, input| h[input['name']] = input['value']; h}
         fields['body'] = comment

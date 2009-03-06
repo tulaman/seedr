@@ -84,8 +84,8 @@ module Seedr
         videos
       end
 
-      def comment(video, comment = 'Cool!')
-        res = send_command('smotri.comments.add', {'videoId' => video.id, 'text' => comment})
+      def comment(video_id, comment = 'Cool!')
+        res = send_command('smotri.comments.add', {'videoId' => video_id, 'text' => comment})
         res['total']
       end
 

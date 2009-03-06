@@ -49,8 +49,36 @@ Main {
 
   mode 'comment' do
     description 'comment on video'
+    argument('video', 'v') {
+      argument :optional
+      description 'optional video id on site'
+    }
+    option('message', 'm') {
+      argument :optional
+      description 'optional message'
+    }
+
     def run
-      say 'Commented.'
+      if params['video'].given?
+        video_id = params['video'].value
+      else
+        video_id = ask('Video ID: ')
+      end
+
+      if params['message'].given?
+        message = params['message'].value
+      else
+        message = ask('Message: ')
+      end
+
+      current_site = @config[:current]
+      account = @config[:accounts][current_site]
+      Seedr::Bot.new(current_site) do |b|
+        b.login(account[:username], account[:password])
+        b.comment(video_id, message)
+      end
+
+      say 'Video has been commented.'
     end
   end
 

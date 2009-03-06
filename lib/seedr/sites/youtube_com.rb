@@ -79,7 +79,7 @@ module Seedr
         get_videos(LAST_VIDEO_URL, count)
       end
       
-      def comment(video, message = 'Cool!')
+      def comment(video_id, message = 'Cool!')
         # prepare comment
         data = REXML::Document.new
         data << REXML::XMLDecl.new('1.0', 'UTF-8')
