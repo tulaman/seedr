@@ -20,7 +20,25 @@ Main {
 
   def run
     puts "seedr [command] --help for usage instructions."
-    puts "The available commands are: \n   add remove change list recent_videos my_videos comment upload multiupload"
+    puts "The available commands are: \n   add remove change list recent_videos my_videos comment upload multiupload categories"
+  end
+
+  mode 'categories' do
+    description 'list of categories available on site'
+    def run
+      current_site = @config[:current]
+      account = @config[:accounts][current_site]
+      Seedr::Bot.new(current_site) do |b|
+        b.login(account[:username], account[:password])
+        c = b.categories
+        if c.length > 0
+          say "ID\tName"
+          c.sort.each {|k, v| say "#{k}\t#{v}"}
+        else
+          say "There are no any categories on site."
+        end
+      end
+    end
   end
 
   mode 'my_videos' do
