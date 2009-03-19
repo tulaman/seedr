@@ -102,7 +102,54 @@ Main {
 
   mode 'upload' do
     description 'upload file to site'
+    argument('file') {
+      description 'video file to upload'
+    }
+    option('title', 't') {
+      argument :optional
+      description 'title for video'
+    }
+    option('description', 'd') {
+      argument :optional
+      description 'optional description for video'
+    }
+    option('category', 'c') {
+      argument :optional
+      description 'optional category for video'
+    }
+    option('tags', 'k') {
+      argument :optional
+      description 'optional tags/keywords for video separated by commas'
+    }
     def run
+      title = params['title'].given? ? params['title'].value : ask('Title for video: ')
+      description = params['description'].given? ? params['description'].value : ''
+      tags = params['tags'].given? ? params['tags'].value : title
+
+      current_site = @config[:current]
+      account = @config[:accounts][current_site]
+      bot = Seedr::Bot.new(current_site) {|b| b.login(account[:username], account[:password])}
+
+      if params['category'].given?
+        category = params['category'].value
+      else
+        c = bot.categories
+        if c.length > 0
+          say "ID\tName"
+          c.sort.each {|k, v| say "#{k}\t#{v}"}
+          category = ask("Category ID: ")
+        else
+          category = ''
+        end
+      end
+
+      bot.upload(params['file'].value, {
+        :title => title,
+        :description => description,
+        :category => category,
+        :keywords => tags
+      })
+
       say 'Uploaded successfuly'
     end
   end
