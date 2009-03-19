@@ -52,7 +52,7 @@ module Seedr
         info = {
           :title => 'Unnamed', 
           :description => '', 
-          :category => '19', 
+          :category => '26', 
           :keywords => ''
         }.merge(meta)
 
