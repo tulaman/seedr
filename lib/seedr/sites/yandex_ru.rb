@@ -104,9 +104,8 @@ module Seedr
         res = Net::HTTP.start(url.host, url.port) do |http|
           http.request(post)
         end
-        puts res
         raise StandardError unless Net::HTTPOK === res
-        return true
+        true
       end
 
     end
