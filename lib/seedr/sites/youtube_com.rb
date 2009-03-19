@@ -19,18 +19,8 @@ module Seedr
       MY_VIDEO_URL = 'http://gdata.youtube.com/feeds/api/users/default/uploads'
       LAST_VIDEO_URL = 'http://gdata.youtube.com/feeds/api/standardfeeds/most_recent'
       UPLOAD_URL = 'http://uploads.gdata.youtube.com/feeds/api/users/%s/uploads'
+      COMMENTS_URL = 'http://gdata.youtube.com/feeds/api/videos/%s/comments'
      
-      @@client_id = 'ytapi-IlyaLityuga-Seedr-vub73lnj-0'
-      @@dev_key = 'AI39si6KB7Ycx4Hg0IISJaxF7rpiMo7zWRkdF7nYml3ftDI9YJBDoGiLI0X6nv_CYQgPA9DvbxtnO7cOBYCpKsuNNhvHAt8HQA'
-
-      def self.client_id=(client_id)
-        @@client_id = client_id
-      end
-
-      def self.developer_key=(dev_key)
-        @@dev_key = dev_key
-      end
-
       def login(username, password)
         @username = username
         @password = password
@@ -41,7 +31,7 @@ module Seedr
           :Email   => username, 
           :Passwd  => password, 
           :service => 'youtube', 
-          :source  => 'TestLogin'
+          :source  => 'Seedr'
         }
         
         # prepare transport
@@ -82,13 +72,13 @@ module Seedr
         data.root.add_element REXML::Element.new('content').add_text(message)
 
         # post it
-        uri = URI.parse(video.comments_feed)
+        uri = URI.parse(COMMENTS_URL % video_id)
         http = Net::HTTP.new(uri.host, uri.port)
         headers = {
           'Content-Type'   => 'application/atom+xml',
           'Authorization'  => "GoogleLogin auth=#{@auth}",
-          'X-GData-Client' => @@client_id,
-          'X-GData-Key'    => "key=#{@@dev_key}",
+          'X-GData-Client' => CONF[:youtube_client_id],
+          'X-GData-Key'    => "key=#{CONF[:youtube_dev_key]}",
         }
         response = http.request_post(uri.path, data.to_s, headers)
       end
@@ -123,8 +113,8 @@ module Seedr
         headers = {
           'Content-Type'   => "multipart/related; boundary=#{boundary}",
           'Authorization'  => "GoogleLogin auth=#{@auth}",
-          'X-GData-Client' => @@client_id,
-          'X-GData-Key'    => "key=#{@@dev_key}",
+          'X-GData-Client' => CONF[:youtube_client_id],
+          'X-GData-Key'    => "key=#{CONF[:youtube_dev_key]}",
           'Slug'           => filename,
         }
         body = ''
@@ -180,7 +170,7 @@ module Seedr
         response = Net::HTTP.start(uri.host, uri.port) do |http|
           query = "#{uri.path}?start-index=1&max-results=#{count}"
           http.get(query, {'Authorization' => "GoogleLogin auth=#{@auth}", 
-                           'X-GData-Key' => "key=#{@@dev_key}"})
+                           'X-GData-Key' => "key=#{CONF[:youtube_dev_key]}"})
         end
 
         videos = Array.new()

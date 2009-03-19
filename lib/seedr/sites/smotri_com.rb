@@ -3,11 +3,9 @@ module Seedr
     class Video < Seedr::Video ; end
     class Bot
       API_URL = 'http://smotri.com/api/json/-/%s/1.0/?lang=rus'
-      DEV_ID = 'lityugaDevID'
-      DEV_PASS = '937455a77d21edd37321fe5a25696239'
 
       def login(username, password)
-        trust_key = Digest::MD5.hexdigest("#{DEV_ID}#{Date.today.to_s}#{DEV_PASS}")
+        trust_key = Digest::MD5.hexdigest("#{CONF[:smotri_dev_id]}#{Date.today.to_s}#{CONF[:smotri_dev_pass]}")
 
         send_command('smotri.auth.get.sid', {'trustKey' => trust_key}) do |res|
           @sid = res['sid']
@@ -97,7 +95,7 @@ module Seedr
       private
 
       def send_command(cmd, params)
-        url = URI.parse(API_URL % DEV_ID)
+        url = URI.parse(API_URL % CONF[:smotri_dev_id])
         params['sid'] = @sid if @sid
         cmd_serialized = {
           "method" => cmd,

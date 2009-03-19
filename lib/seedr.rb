@@ -26,4 +26,7 @@ require 'seedr/bot'
 module Seedr
   class CantConnect < StandardError; end
   class AuthError < StandardError; end
+
+  # Load YAML configuration from a file and use those parameters  
+  CONF = YAML.load(File.open(File.join(ENV['HOME'], '.seedr'))) or {} rescue CONF = {}
 end
