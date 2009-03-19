@@ -1,33 +1,6 @@
-class NotAuthorizedError < StandardError ; end
-class NetError < StandardError ; end
-class UploadFailure < StandardError ; end
-
 module Seedr
   module RutubeRu
     class Video < Seedr::Video ; end
-
-    CATEGORIES = {
-      "Юмор, развлечения" => 19,
-      "Кино, ТВ, телешоу" => 5,
-      "Аварии, катастрофы, драки" => 1,
-      "Музыка, выступления" => 6,
-      "Мультфильмы" => 7,
-      "Спорт" => 16,
-      "Технологии, наука" => 17,
-      "Авто, мото" => 2,
-      "Рекламные ролики" => 14,
-      "Природа, животные" => 10,
-      "Игры" => 22,
-      "Новости, политика" => 8,
-      "Друзья, вечеринки" => 3,
-      "Искусство, творчество" => 4,
-      "Видеооткрытки, видеоблоги" => 20,
-      "Семья, дом, дети" => 15,
-      "Праздники, торжества" => 9,
-      "Путешествия, страны, города" => 11,
-      "Эротика" => 18,
-      "Разное" => 13,
-    }
 
     class Bot
       LOGIN_URL = 'http://rutube.ru/login.html'
@@ -49,27 +22,18 @@ module Seedr
         end
       end
 
-      # TODO: use Nokogiri::XML here
       def get_recent_videos(count = 10)
-        videos = Array.new
-        http_get(URI.parse(LAST_VIDEO_URL % count)) do |doc|
-          d = REXML::Document.new(doc)
-          d.root.each_element('movie') do |movie|
-            id = movie.attributes['id']
-            title = movie.get_elements('title').first.text.strip
-            description = movie.get_elements('description').first.text
-            videos << Video.new(id, title, description)
-          end
+        Nokogiri::XML( open(LAST_VIDEO_URL % count) ).xpath('/response/movie').collect do |movie|
+          id = movie.attributes['id']
+          title = movie.xpath('title').first.text.strip
+          description = movie.xpath('description').first.text
+          Video.new(id, title, description)
         end
-        videos
       end
 
       def logout
-        url = URI.parse(LOGOUT_URL)
-        res = Net::HTTP.start(url.host, url.port) do |http|
-          http.get(url.path, {'Cookie' => @auth_cookie})
-        end
-        raise NetError unless res.class == Net::HTTPFound
+        open(LOGOUT_URL, 'Cookie' => @auth_cookie)
+        true
       end
 
       def categories
@@ -113,17 +77,14 @@ module Seedr
       end
 
       def get_my_videos(count = 10)
-        videos = Array.new
-        http_get(URI.parse(MY_VIDEO_URL % @username)) do |doc|
-          d = Nokogiri::HTML(doc)
-          d.xpath('//div[@class="track"]/div[@class="col1"]/div/a[@class="trackTitle"]').each do |a|
-            id = a['href'].match(/\/(\d+)\.html/)[1]
-            title = a.text
-            description = a['title']
-            videos << Video.new(id, title, description)
-          end
+        expr = '//div[@class="track"]//a[@class="trackTitle"]'
+        v = Nokogiri::HTML(open(MY_VIDEO_URL % @username)).xpath(expr).collect do |a|
+          id = a['href'].match(/\/(\d+)\.html/)[1]
+          title = a.text
+          description = a['title']
+          Video.new(id, title, description)
         end
-        videos[0..count-1]
+        v[0..count-1]
       end
 
       def comment(video_id, comment = 'Cool!')
@@ -141,20 +102,6 @@ module Seedr
           http.request(req)
         end
         res
-      end
-
-      private
-
-      def http_get(url)
-        res = Net::HTTP.start(url.host, url.port) do |http|
-          http.get(url.request_uri, {'Cookie' => @auth_cookie})
-        end
-        case res
-        when Net::HTTPOK
-          yield(res.body)
-        else
-          raise NetError
-        end
       end
     end
   end
