@@ -40,6 +40,11 @@ module Seedr
       end
 
       def logout
+        true
+      end
+
+      def categories
+        send_command('smotri.videos.rubric.list', {})['rubrics'].inject({}) {|h, r| h[r['id']] = r['name']; h}
       end
 
       def upload(filename, meta = {})

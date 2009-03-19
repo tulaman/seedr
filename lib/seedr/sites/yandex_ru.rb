@@ -48,6 +48,10 @@ module Seedr
         true
       end
 
+      def categories
+        {}
+      end
+
       def get_recent_videos(count=10)
         RSS::Parser.parse(open(LAST_VIDEOS_URL)).items[0..count].collect do |i|
           Video.new(i.link, i.title, i.description)

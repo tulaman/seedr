@@ -159,7 +159,18 @@ module Seedr
       end
 
       def logout
-        puts "Logged out"
+        true
+      end
+
+      def categories
+        doc = Nokogiri::XML(open('http://gdata.youtube.com/schemas/2007/categories.cat'))
+        namespaces = {'app'  => 'http://www.w3.org/2007/app', 
+                      'atom' => 'http://www.w3.org/2005/Atom', 
+                      'yt'   => 'http://gdata.youtube.com/schemas/2007'}
+        doc.xpath('/app:categories/atom:category[yt:assignable]/attribute::term', namespaces).inject({}) do |h, c|
+          h[c.to_s] = c.to_s
+          h
+        end
       end
 
       private

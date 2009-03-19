@@ -36,6 +36,7 @@ module Seedr
       MY_VIDEO_URL = 'http://%s.rutube.ru/movies?view=compact&oby=recent_tracks'
       COMMENT_URL = 'http://rutube.ru/tracks/comments.html'
       UPLOAD_URL = 'http://uploader.rutube.ru/upload2.html/%s'
+      CATEGORIES_URL = 'http://rutube.ru/cgi-bin/xmlapi.cgi?rt_mode=categories'
 
       def login(username, password)
         @username = username
@@ -69,6 +70,14 @@ module Seedr
           http.get(url.path, {'Cookie' => @auth_cookie})
         end
         raise NetError unless res.class == Net::HTTPFound
+      end
+
+      def categories
+        doc = Nokogiri::XML( open(CATEGORIES_URL) )
+        doc.xpath('/response/categories/category').inject({}) do |h, cat|
+          h[cat.attributes['id'].to_s.to_i] = cat.text
+          h
+        end
       end
 
       def upload(filename, meta = {})
