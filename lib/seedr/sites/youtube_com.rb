@@ -1,24 +1,16 @@
 module Seedr
   module YoutubeCom
     class Video < Seedr::Video
+      VIDEO_URL = 'http://gdata.youtube.com/feeds/api/videos'
       attr_accessor :comments_feed, :state
-      def initialize(id, title, desc, comments_feed, state = :published)
+      def initialize(id, title, desc, state = :published)
         super(id, title, desc)
-        @comments_feed = comments_feed
+        @comments_feed = [VIDEO_URL, id, 'comments'].join('/')
         @state = state
       end
 
       def published?
         state == :published
-      end
-
-      def to_s
-        puts '-' * 10
-        puts "ID: #{id}"
-        puts "Title: #{title}"
-        puts "Description: #{desc}"
-        puts "Comments feed: #{comments_feed}"
-        puts '-' * 10
       end
     end
 
@@ -160,8 +152,7 @@ module Seedr
           id = entry.get_elements('id').first.text
           title = entry.get_elements('media:group/media:title').first.text
           description = entry.get_elements('media:group/media:description').first.text
-          cfeed = entry.get_elements('gd:comments/gd:feedLink').first.attributes["href"]
-          return Seedr::YoutubeCom::Video.new(id, title, description, cfeed, :processing)
+          return Seedr::YoutubeCom::Video.new(id, title, description, :processing)
         else
           raise UploadFailure
         end
@@ -183,17 +174,15 @@ module Seedr
 
         videos = Array.new()
         doc = REXML::Document.new(response.body)
-#        puts response.body
         doc.each_element('feed/entry') do |entry|
-          id = entry.get_elements('id').first.text
+          id = entry.get_elements('id').first.text.gsub(/^http:\/\/gdata\.youtube\.com\/feeds\/api\/videos\//, '')
           title = entry.get_elements('media:group/media:title').first.text
           description = entry.get_elements('media:group/media:description').first.text
-          cfeed = entry.get_elements('gd:comments/gd:feedLink').first.attributes["href"]
           status = :published
 #          if (control = entry.get_elements('app:control')) && control.first.get_elements('app:draft').first.text == 'yes'
 #            status = control.get_elements('yt:state').first.attributes['name'].to_sym
 #          end
-          videos << Seedr::YoutubeCom::Video.new(id, title, description, cfeed)
+          videos << Seedr::YoutubeCom::Video.new(id, title, description)
         end
         videos
       end
