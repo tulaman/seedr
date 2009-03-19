@@ -32,6 +32,10 @@ module Seedr
       raise UnauthorizedError unless authorized?
       @actor.get_my_videos(count)
     end
+
+    def categories
+      @actor.categories
+    end
     
     def comment(v, message = 'Cool!')
       raise UnauthorizedError unless authorized?
