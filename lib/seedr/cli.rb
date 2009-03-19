@@ -123,7 +123,7 @@ Main {
     }
     def run
       title = params['title'].given? ? params['title'].value : ask('Title for video: ')
-      description = params['description'].given? ? params['description'].value : ''
+      description = params['description'].given? ? params['description'].value : title
       tags = params['tags'].given? ? params['tags'].value : title
 
       current_site = @config[:current]
@@ -156,7 +156,37 @@ Main {
 
   mode 'multiupload' do
     description 'upload file to all known sites'
+    argument('file') {
+      description 'video file to upload'
+    }
+    option('title', 't') {
+      argument :optional
+      description 'title for video'
+    }
+    option('description', 'd') {
+      argument :optional
+      description 'optional description for video'
+    }
+    option('tags', 'k') {
+      argument :optional
+      description 'optional tags/keywords for video separated by commas'
+    }
     def run
+      title = params['title'].given? ? params['title'].value : ask('Title for video: ')
+      description = params['description'].given? ? params['description'].value : title
+      tags = params['tags'].given? ? params['tags'].value : title
+
+      @config[:accounts].each do |site, account|
+        Seedr::Bot.new(site) do |b| 
+          b.login(account[:username], account[:password])
+          say "uploading to #{site}..."
+          b.upload(params['file'].value, {
+            :title => title,
+            :description => description,
+            :keywords => tags
+          })
+        end
+      end
       say 'Uploaded successfuly'
     end
   end
