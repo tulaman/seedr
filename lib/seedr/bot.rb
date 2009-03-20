@@ -24,31 +24,12 @@ module Seedr
       @actor.logout
     end
   
-    def get_recent_videos(count = 10)
-      @actor.get_recent_videos(count)
-    end
-
-    def get_my_videos(count = 10)
-      raise UnauthorizedError unless authorized?
-      @actor.get_my_videos(count)
-    end
-
-    def categories
-      @actor.categories
-    end
-    
-    def comment(v, message = 'Cool!')
-      raise UnauthorizedError unless authorized?
-      @actor.comment(v, message)
-    end
-  
-    def upload(filename, meta)
-      raise UnauthorizedError unless authorized?
-      @actor.upload(filename, meta)
-    end
-
-    def check_status(video_or_id)
-      @actor.check_status(video_or_id)
+    def method_missing(method_id, *args)
+      if @actor.respond_to?(method_id)
+        @actor.send(method_id, *args)
+      else
+        super
+      end
     end
   end
 end
