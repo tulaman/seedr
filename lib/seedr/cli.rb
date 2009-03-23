@@ -48,7 +48,7 @@ Main {
       account = @config[:accounts][current_site]
       Seedr::Bot.new(current_site) do |b|
         b.login(account[:username], account[:password])
-        b.get_my_videos.each {|v| puts v}
+        b.get_my_videos.each {|v| puts v; puts '-' * 10}
       end
     end
   end
@@ -60,7 +60,7 @@ Main {
       account = @config[:accounts][current_site]
       Seedr::Bot.new(current_site) do |b|
         b.login(account[:username], account[:password])
-        b.get_recent_videos.each {|v| puts v}
+        b.get_recent_videos.each {|v| puts v; puts '-' * 10}
       end
     end
   end
