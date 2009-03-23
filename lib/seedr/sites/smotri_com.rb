@@ -1,6 +1,20 @@
 module Seedr
   module SmotriCom
-    class Video < Seedr::Video ; end
+    class Video < Seedr::Video
+      def self.parse(h)
+        new do |v|
+          v.id = h['id']
+          v.title = h['title']
+          v.description = h['description']
+          v.rating = h['rating']
+          v.votes = h['rateCount']
+          v.views = h['viewCount']
+          v.comments = h['commentCount']
+          v.page_url = "http://smotri.com/video/view/?id=#{v.id}"
+        end
+      end
+    end
+
     class Bot
       API_URL = 'http://smotri.com/api/json/-/%s/1.0/?lang=rus'
 
@@ -23,18 +37,13 @@ module Seedr
       end
 
       def get_recent_videos(count = 10)
-        videos = Array.new
-        send_command('smotri.videos.list.novelty', {
+        res = send_command('smotri.videos.list.novelty', {
           "maxCount" => count,
           "fetchTotal" => false,
           "noDoubtful" => false,
           "from"       => 0,
-        }) do |res| 
-          res['videos'].each do |v|
-            videos << Video.new(v['id'], v['title'], v['description'])
-          end
-        end
-        videos
+        })
+        res['videos'].collect {|v| Video.parse v}
       end
 
       def logout
@@ -68,23 +77,18 @@ module Seedr
         res = Net::HTTP.start(url.host, url.port) {|http| http.request(post)}
         raise StandardError unless Net::HTTPOK === res
 
-        Video.new(upload_id, info[:title], info[:description])
+        upload_id
       end
 
       def get_my_videos(count = 10)
-        videos = Array.new
-        send_command('smotri.videos.list.by.user', {
+        res = send_command('smotri.videos.list.by.user', {
           "sort"       => 'added',
           "maxCount"   => count,
           "fetchTotal" => false,
           "login"      => @login,
           "from"       => 0,
-        }) do |res| 
-          res['videos'].each do |v|
-            videos << Video.new(v['id'], v['title'], v['description'])
-          end
-        end
-        videos
+        })
+        res['videos'].collect {|v| Video.parse v}
       end
 
       def comment(video_id, comment = 'Cool!')
@@ -102,7 +106,6 @@ module Seedr
           "params" => params,
           "id" => nil
         }.to_json
-#        puts "Sending #{cmd_serialized}"
 
         res = Net::HTTP.start(url.host, url.port) do |http|
           http.request_post(url.request_uri, cmd_serialized)
@@ -115,7 +118,6 @@ module Seedr
           raise StandardError, result['error']
         end
 
-#        puts "Result\n#{result.inspect}"
         return yield(result['result']) if block_given?
         result['result']
       end

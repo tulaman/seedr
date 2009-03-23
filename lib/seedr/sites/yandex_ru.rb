@@ -1,6 +1,28 @@
 module Seedr
   module YandexRu
-    class Video < Seedr::Video ; end
+    class Video < Seedr::Video
+      def self.new_from_html(url)
+        html = Nokogiri::HTML(open(url))
+        new do |v|
+          v.id = url
+          v.title = html.xpath('//div[@class="b-page-title"]/h2').text
+          
+          media_info = html.xpath('//dl[@class="b-media-info"]')
+          description = media_info.xpath('dd[@class="text description b-static-text"]')
+          v.description = description.text
+          v.views = description.first.next.text.match(/(\d+)/)[1].to_i
+
+          rating = media_info.xpath('dd[@class="rating"]')
+          v.votes = rating.xpath('span').text.to_i
+          v.rating = rating.xpath('i').first.attributes['class'].to_s.match(/b-rating-stars-([012345])/)[1].to_i
+
+          v.comments = html.xpath('//div[@class="total b-comment"]/h2[@class="sum"]').text.to_i
+        end
+      end
+
+      def page_url ; id end
+    end
+
     class Bot
       LOGIN_URL = 'http://passport.yandex.ru/passport?mode=auth'
       LAST_VIDEOS_URL = 'http://video.yandex.ru/recent/rss'
@@ -53,15 +75,11 @@ module Seedr
       end
 
       def get_recent_videos(count=10)
-        RSS::Parser.parse(open(LAST_VIDEOS_URL)).items[0..count].collect do |i|
-          Video.new(i.link, i.title, i.description)
-        end
+        RSS::Parser.parse(open(LAST_VIDEOS_URL)).items[0..count].collect {|i| Video.new_from_html i.link}
       end
 
       def get_my_videos(count=10)
-        RSS::Parser.parse(open(MY_VIDEOS_URL % @login, {'Cookie' => @cookies})).items[0..count].collect do |i|
-          Video.new(i.link, i.title, i.description)
-        end
+        RSS::Parser.parse(open(MY_VIDEOS_URL % @login, {'Cookie' => @cookies})).items[0..count].collect {|i| Video.new_from_html i.link}
       end
 
       def comment(video_id, comment='Cool!')

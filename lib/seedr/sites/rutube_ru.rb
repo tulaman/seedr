@@ -1,15 +1,46 @@
 module Seedr
   module RutubeRu
-    class Video < Seedr::Video ; end
+    class Video < Seedr::Video
+      def self.new_from_xml(xml)
+        new do |v|
+          v.id = xml.attributes['id']
+          v.title = xml.xpath('title').first.text.strip
+          v.description = xml.xpath('description').first.text
+          v.views = xml.xpath('hits').first.text
+          v.votes = xml.xpath('votes').first.text
+          v.rating = xml.xpath('rating').first.text
+          v.comments = xml.xpath('numberOfComments').first.text
+        end
+      end
+
+      def self.new_from_html(html)
+        div = html.xpath('tr/td[@width="45%"]/div')
+        a = html.xpath('tr/td/a[@class="trackTitle"]').first
+        new do |v|
+          v.id = a.attributes['href'].to_s.match(/^http:\/\/rutube.ru\/tracks\/(\d+).html/)[1]
+          v.title = a.text
+          v.description = a.attributes['title'].to_s
+          v.views = div.xpath('div[@class="views"]/span').text
+          v.votes = 'unknown'
+          v.rating = 'unknown'
+          v.comments = div.xpath('div[@class="comments"]/a').text
+        end
+      end
+
+      def page_url
+        "http://rutube.ru/tracks/#{id}.html"
+      end
+    end
 
     class Bot
       LOGIN_URL = 'http://rutube.ru/login.html'
       LOGOUT_URL = 'http://rutube.ru/logout.html'
       LAST_VIDEO_URL = 'http://rutube.ru/cgi-bin/xmlapi.cgi?rt_sort_by=date&rt_count=%d&rt_mode=movies'
-      MY_VIDEO_URL = 'http://%s.rutube.ru/movies?view=compact&oby=recent_tracks'
+      MY_VIDEO_URL = 'http://%s.rutube.ru/movies?view=full&oby=recent_tracks'
       COMMENT_URL = 'http://rutube.ru/tracks/comments.html'
       UPLOAD_URL = 'http://uploader.rutube.ru/upload2.html/%s'
       CATEGORIES_URL = 'http://rutube.ru/cgi-bin/xmlapi.cgi?rt_mode=categories'
+      VIDEO_URL = 'http://rutube.ru/cgi-bin/xmlapi.cgi?rt_mode=movie&rt_movie_id=%s'
 
       def login(username, password)
         @username = username
@@ -23,12 +54,7 @@ module Seedr
       end
 
       def get_recent_videos(count = 10)
-        Nokogiri::XML( open(LAST_VIDEO_URL % count) ).xpath('/response/movie').collect do |movie|
-          id = movie.attributes['id']
-          title = movie.xpath('title').first.text.strip
-          description = movie.xpath('description').first.text
-          Video.new(id, title, description)
-        end
+        Nokogiri::XML( open(LAST_VIDEO_URL % count) ).xpath('/response/movie').collect { |xml| Video.new_from_xml xml}
       end
 
       def logout
@@ -77,13 +103,7 @@ module Seedr
       end
 
       def get_my_videos(count = 10)
-        expr = '//div[@class="track"]//a[@class="trackTitle"]'
-        v = Nokogiri::HTML(open(MY_VIDEO_URL % @username)).xpath(expr).collect do |a|
-          id = a['href'].match(/\/(\d+)\.html/)[1]
-          title = a.text
-          description = a['title']
-          Video.new(id, title, description)
-        end
+        v = Nokogiri::HTML(open(MY_VIDEO_URL % @username)).xpath('//table[@width="100%"]').collect {|html| Video.new_from_html(html)}
         v[0..count-1]
       end
 

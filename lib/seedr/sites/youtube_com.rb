@@ -1,16 +1,24 @@
 module Seedr
   module YoutubeCom
     class Video < Seedr::Video
-      VIDEO_URL = 'http://gdata.youtube.com/feeds/api/videos'
-      attr_accessor :comments_feed, :state
-      def initialize(id, title, desc, state = :published)
-        super(id, title, desc)
-        @comments_feed = [VIDEO_URL, id, 'comments'].join('/')
-        @state = state
+      def self.new_from_xml(xml)
+        new do |v|
+          statistics = xml.get_elements('yt:statistics').first
+          votes = xml.get_elements('gd:rating').first
+          rating = xml.get_elements('gd:rating').first
+
+          v.id = xml.get_elements('id').first.text.gsub(/^http:\/\/gdata\.youtube\.com\/feeds\/api\/videos\//, '')
+          v.title = xml.get_elements('media:group/media:title').first.text
+          v.description = xml.get_elements('media:group/media:description').first.text
+          v.views = statistics.nil? ? 0 : statistics.attributes['viewCount']
+          v.votes = votes.nil? ? 0 : votes.attributes['numRaters']
+          v.rating = rating.nil? ? 0 : rating.attributes['average']
+          v.comments = xml.get_elements('gd:comments/gd:feedLink').first.attributes['countHint']
+        end
       end
 
-      def published?
-        state == :published
+      def page_url
+        "http://www.youtube.com/watch?v=#{id}"
       end
     end
 
@@ -20,6 +28,7 @@ module Seedr
       LAST_VIDEO_URL = 'http://gdata.youtube.com/feeds/api/standardfeeds/most_recent'
       UPLOAD_URL = 'http://uploads.gdata.youtube.com/feeds/api/users/%s/uploads'
       COMMENTS_URL = 'http://gdata.youtube.com/feeds/api/videos/%s/comments'
+      VIDEO_URL = 'http://gdata.youtube.com/feeds/api/videos/%s'
      
       def login(username, password)
         @username = username
@@ -48,13 +57,6 @@ module Seedr
 
       def get_my_videos(count = 10)
         get_videos(MY_VIDEO_URL, count)
-      end
-
-      def check_status(video_or_id)
-        if video_or_id.class == Seedr::YoutubeCom::Video
-          id = video_or_id.id
-        end
-        get_videos(MY_VIDEO_URL, 100).select {|v| v.id == id}.state
       end
 
       def get_recent_videos(count = 10)
@@ -165,30 +167,14 @@ module Seedr
 
       private
 
-      def get_videos(channel_url, count)
-        uri = URI.parse(channel_url)
-        response = Net::HTTP.start(uri.host, uri.port) do |http|
-          query = "#{uri.path}?start-index=1&max-results=#{count}"
-          http.get(query, {'Authorization' => "GoogleLogin auth=#{@auth}", 
-                           'X-GData-Key' => "key=#{CONF[:youtube_dev_key]}"})
-        end
 
-        videos = Array.new()
-        doc = REXML::Document.new(response.body)
-        doc.each_element('feed/entry') do |entry|
-          id = entry.get_elements('id').first.text.gsub(/^http:\/\/gdata\.youtube\.com\/feeds\/api\/videos\//, '')
-          title = entry.get_elements('media:group/media:title').first.text
-          description = entry.get_elements('media:group/media:description').first.text
-          status = :published
-#          if (control = entry.get_elements('app:control')) && control.first.get_elements('app:draft').first.text == 'yes'
-#            status = control.get_elements('yt:state').first.attributes['name'].to_sym
-#          end
-          videos << Seedr::YoutubeCom::Video.new(id, title, description)
-        end
-        videos
+      def get_videos(channel_url, count)
+        channel_url << "?start-index=1&max-results=#{count}"
+        doc = open(channel_url, 'Authorization' => "GoogleLogin auth=#{@auth}", 'X-GData-Key' => "key=#{CONF[:youtube_dev_key]}")
+        REXML::Document.new(doc).get_elements('feed/entry').collect {|entry| Video.new_from_xml entry}
       end
-    end # class
-  end # module Bots
-end # module Seedr
+    end
+  end
+end
 
 
