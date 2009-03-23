@@ -96,6 +96,11 @@ module Seedr
         res['total']
       end
 
+      def video(video_id)
+        res = send_command('smotri.videos.get.details', {'videoIds' => [video_id]})
+        Video.parse res['videos'].first
+      end
+
       private
 
       def send_command(cmd, params)

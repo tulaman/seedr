@@ -20,7 +20,7 @@ Main {
 
   def run
     puts "seedr [command] --help for usage instructions."
-    puts "The available commands are: \n   add remove change list recent_videos my_videos comment upload multiupload categories"
+    puts "The available commands are: \n   add remove change list recent_videos my_videos comment upload multiupload categories video"
   end
 
   mode 'categories' do
@@ -295,6 +295,22 @@ Main {
       say "#{new_current} is now the current account.\n"
     end
   end
-  
+
+  mode 'video' do
+    description 'Shows detailed information about requested video'
+    argument('id') {
+      description 'ID video on site'
+    }
+    def run
+      id = params['id'].value
+      current_site = @config[:current]
+      account = @config[:accounts][current_site]
+      Seedr::Bot.new(current_site) do |b|
+        b.login(account[:username], account[:password])
+        video = b.video(id)
+        puts video
+      end
+    end
+  end  
 }
 

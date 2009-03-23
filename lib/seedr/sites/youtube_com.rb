@@ -165,6 +165,10 @@ module Seedr
         end
       end
 
+      def video(video_id)
+        Video.new_from_xml REXML::Document.new(open(VIDEO_URL % video_id)).get_elements('/entry').first
+      end
+      
       private
 
 

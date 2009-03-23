@@ -123,6 +123,10 @@ module Seedr
         end
         res
       end
+
+      def video(video_id)
+        Video.new_from_xml Nokogiri::XML(open(VIDEO_URL % video_id)).xpath('/response/movie').first
+      end
     end
   end
 end

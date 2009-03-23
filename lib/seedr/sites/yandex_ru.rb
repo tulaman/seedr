@@ -97,6 +97,10 @@ module Seedr
         return true
       end
 
+      def video(video_id)
+        Video.new_from_html video_id
+      end
+
       def upload(filename, meta)
         info = {
           :title => 'Безымянный', 
