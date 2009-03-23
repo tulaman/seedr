@@ -2,6 +2,7 @@ CHANGELOG
 Rakefile
 bin/seedr
 Manifest
+seedr.gemspec
 lib/multipart_post_request.rb
 lib/seedr/cli.rb
 lib/seedr/ext.rb

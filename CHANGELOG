@@ -1,3 +1,13 @@
+0.1.2 - March 23, 2009
+* 5 new commands and 2 major enchancements
+    * inmplemented 'comment' command
+    * added 'categories' method and command to request a list of categories from site
+    * implemented 'upload' method for uploading video to the current account
+    * implemented 'multiupload' command for uploading video to all sites with configured accounts
+    * all developer keys and secrets removed from code and should be read from ~/.seedr file now
+    * methods recent_video and my_video has been refactored to separate parsing logic to Video class and keep code dry
+    * added method and command 'video' to request full information about video
+
 0.1.1 - March 4, 2009
     * command line interface was added
 
